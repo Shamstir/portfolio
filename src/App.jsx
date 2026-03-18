@@ -1,110 +1,357 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
-function App() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+const PROJECTS = [
+  {
+    name: "Proximity",
+    repo: "proximity",
+    desc: "A modern location-based mobile application built with Flutter and Dart.",
+    tags: ["Flutter", "Dart", "Mobile"],
+  },
+  {
+    name: "Ember Grants",
+    repo: "Ember-Grants",
+    desc: "A grant management platform built for streamlined application workflows and fund distribution tracking.",
+    tags: ["JavaScript", "Web App"],
+  },
+  {
+    name: "Paryatak",
+    repo: "paryatak",
+    desc: "A travel and tourism web application for discovering destinations and planning itineraries.",
+    tags: ["JavaScript", "Travel"],
+  },
+  {
+    name: "Insta",
+    repo: "insta",
+    desc: "A full-featured Instagram clone built with Flutter — feed, stories, profiles, and real-time interactions.",
+    tags: ["Flutter", "Dart", "Mobile"],
+  },
+  {
+    name: "Educat",
+    repo: "Educat",
+    desc: "An education platform app facilitating learning through interactive content and course management.",
+    tags: ["Flutter", "Dart", "EdTech"],
+  },
+  {
+    name: "FleetIQ",
+    repo: "fleetIQ",
+    desc: "Fleet management application for tracking vehicles, optimizing routes, and managing logistics.",
+    tags: ["Flutter", "Dart", "IoT"],
+  },
+  {
+    name: "Let's Talk",
+    repo: "Let-s_Talk",
+    desc: "Real-time chat application with modern UI, media sharing, and secure messaging features.",
+    tags: ["Flutter", "Dart", "Chat"],
+  },
+];
+
+const SKILLS = [
+  { icon: "📱", name: "Flutter" },
+  { icon: "🎯", name: "Dart" },
+  { icon: "⚛️", name: "React" },
+  { icon: "✨", name: "JavaScript" },
+  { icon: "🔥", name: "Firebase" },
+  { icon: "🎮", name: "Unity / C#" },
+  { icon: "🐙", name: "Git" },
+  { icon: "💻", name: "C++" },
+];
+
+const NAV_LINKS = [
+  { label: "About", href: "#about" },
+  { label: "Skills", href: "#skills" },
+  { label: "Projects", href: "#projects" },
+  { label: "Contact", href: "#contact" },
+];
+
+function useScrollReveal() {
+  const ref = useRef(null);
 
   useEffect(() => {
-    setTimeout(() => {
-      document.querySelector(".splash").classList.add("fade-out");
-      setTimeout(() => setShowSplash(false), 800);
-    }, 2000);
+    const el = ref.current;
+    if (!el) return;
 
-    const revealOnScroll = () => {
-      document.querySelectorAll("section").forEach((section) => {
-        const sectionTop = section.getBoundingClientRect().top;
-        if (sectionTop < window.innerHeight - 150) {
-          section.classList.add("show");
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("visible");
         }
-      });
-    };
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -60px 0px" }
+    );
 
-    const handleMouseMove = (e) => {
-      setCursorPosition({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener("scroll", revealOnScroll);
-    window.addEventListener("mousemove", handleMouseMove);
-    revealOnScroll();
-
-    return () => {
-      window.removeEventListener("scroll", revealOnScroll);
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
+  return ref;
+}
+
+function Reveal({ className = "", stagger = false, children }) {
+  const ref = useScrollReveal();
+  const cls = stagger ? `reveal-stagger ${className}` : `reveal ${className}`;
   return (
-    <div style={{ width: "100%" }}>
-      <div 
-        className="custom-cursor" 
-        style={{ 
-          left: `${cursorPosition.x}px`, 
-          top: `${cursorPosition.y}px` 
-        }}
-      />
+    <div ref={ref} className={cls}>
+      {children}
+    </div>
+  );
+}
 
-      {showSplash && (
-        <div className="splash">
-          <div className="splash-text">
-            <span>W</span><span>e</span><span>l</span><span>c</span>
-            <span>o</span><span>m</span><span>e</span>
+function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const closeMenu = () => setMenuOpen(false);
+
+  return (
+    <>
+      {/* ===== Navbar ===== */}
+      <nav className={`navbar${scrolled ? " scrolled" : ""}`} id="navbar">
+        <div className="navbar-inner">
+          <a href="#" className="navbar-logo">
+            vinit<span>.</span>
+          </a>
+
+          <div className="navbar-links">
+            {NAV_LINKS.map((l) => (
+              <a key={l.href} href={l.href}>
+                {l.label}
+              </a>
+            ))}
           </div>
-        </div>
-      )}
 
-      <nav className="horizontal-nav">
-        <ul>
-          <li><a href="#home">Home</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="https://github.com/shamstir" target="_blank" rel="noopener noreferrer">Projects</a></li>
-          <li><a href="https://leetcode.com/shamstir" target="_blank" rel="noopener noreferrer">LeetCode</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
+          <button
+            className={`hamburger${menuOpen ? " open" : ""}`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
       </nav>
 
+      {/* Mobile nav overlay */}
+      <div className={`mobile-nav${menuOpen ? " open" : ""}`}>
+        {NAV_LINKS.map((l) => (
+          <a key={l.href} href={l.href} onClick={closeMenu}>
+            {l.label}
+          </a>
+        ))}
+      </div>
+
+      {/* ===== Hero ===== */}
       <section className="hero" id="home">
-        <div className="hero-card">
-          <h1>
-            Hi, I'm <span className="name">Vinit Yadav</span>
+        <div className="hero-bg">
+          <div className="hero-bg-orb hero-bg-orb--1" />
+          <div className="hero-bg-orb hero-bg-orb--2" />
+        </div>
+        <div className="hero-content">
+          <span className="hero-label">App Developer</span>
+          <h1 className="hero-title">
+            Hi, I'm <span className="accent">Vinit Yadav</span>
           </h1>
-          <p className="typing-effect">App Developer | Game Developer</p>
-          <div className="button-container">
-            <a 
-              href="https://github.com/shamstir" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="button"
+          <p className="hero-subtitle">
+            I craft polished mobile apps, immersive games, and thoughtful web
+            experiences — turning ideas into products people love.
+          </p>
+          <div className="hero-actions">
+            <a
+              href="#projects"
+              className="btn btn-primary"
             >
-              View GitHub
+              View Projects ↓
+            </a>
+            <a
+              href="https://github.com/shamstir"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary"
+            >
+              GitHub ↗
             </a>
           </div>
         </div>
-        <div className="background-particles"></div>
       </section>
 
-      <section className="about" id="about">
-        <h2 className="section-title">About Me</h2>
-        <div className="about-content">
-          <p>I'm a highly driven and enthusiastic developer, passionate about app development, game development, and backend engineering.</p>
-          <div className="skills-grid">
-            <p className="skill-item">🚀 Learning Flutter backend development</p>
-            <p className="skill-item">🎮 Revolutionizing game development</p>
-            <p className="skill-item">📱 Crafting mobile experiences</p>
-            <p className="skill-item">💡 Exploring cybersecurity</p>
-            <p className="skill-item">👨‍💻 Competitive programming</p>
-          </div>
+      {/* ===== About ===== */}
+      <section className="section" id="about">
+        <div className="container">
+          <Reveal>
+            <div className="section-header">
+              <span className="section-label">About</span>
+              <h2 className="section-title">A bit about me</h2>
+              <div className="section-divider" />
+            </div>
+          </Reveal>
+
+          <Reveal>
+            <div className="about-content">
+              <p className="about-text">
+                I'm a <strong>highly driven developer</strong> passionate about
+                building apps that solve real problems. From{" "}
+                <strong>Flutter mobile apps</strong> and{" "}
+                <strong>game development with Unity</strong> to full-stack web
+                projects — I love shipping products that feel great to use. Currently
+                exploring <strong>backend engineering</strong> and{" "}
+                <strong>cybersecurity</strong>, and always sharpening my skills
+                through competitive programming.
+              </p>
+
+              <div className="about-stats">
+                <div className="about-stat">
+                  <div className="about-stat-number">7+</div>
+                  <div className="about-stat-label">Projects</div>
+                </div>
+                <div className="about-stat">
+                  <div className="about-stat-number">4+</div>
+                  <div className="about-stat-label">Flutter Apps</div>
+                </div>
+                <div className="about-stat">
+                  <div className="about-stat-number">3+</div>
+                  <div className="about-stat-label">Web Platforms</div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      <section className="contact" id="contact">
-        <h2 className="section-title">Connect with Me</h2>
-        <div className="contact-links">
-          <p><a href="https://www.linkedin.com/in/vinit-yadav-1bb36728b/" target="_blank" rel="noopener noreferrer">🔗 LinkedIn</a></p>
-          <p><a href="mailto:vyadav1267354@gmail.com">📧 Email Me</a></p>
+      {/* ===== Skills ===== */}
+      <section className="section" id="skills">
+        <div className="container">
+          <Reveal>
+            <div className="section-header">
+              <span className="section-label">Skills</span>
+              <h2 className="section-title">Tech I work with</h2>
+              <div className="section-divider" />
+            </div>
+          </Reveal>
+
+          <Reveal stagger>
+            <div className="skills-grid">
+              {SKILLS.map((s) => (
+                <div key={s.name} className="skill-card reveal-child">
+                  <span className="skill-icon">{s.icon}</span>
+                  <span className="skill-name">{s.name}</span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
-    </div>
+
+      {/* ===== Projects ===== */}
+      <section className="section" id="projects">
+        <div className="container">
+          <Reveal>
+            <div className="section-header">
+              <span className="section-label">Projects</span>
+              <h2 className="section-title">What I've built</h2>
+              <div className="section-divider" />
+            </div>
+          </Reveal>
+
+          <Reveal stagger>
+            <div className="projects-grid">
+              {PROJECTS.map((p) => (
+                <a
+                  key={p.repo}
+                  href={`https://github.com/Shamstir/${p.repo}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="project-card reveal-child"
+                  style={{ textDecoration: "none" }}
+                >
+                  <div className="project-card-header">
+                    <span className="project-card-icon">📂</span>
+                    <span className="project-card-link">↗</span>
+                  </div>
+                  <h3 className="project-card-title">{p.name}</h3>
+                  <p className="project-card-desc">{p.desc}</p>
+                  <div className="project-card-footer">
+                    {p.tags.map((t) => (
+                      <span
+                        key={t}
+                        className={`project-tag${
+                          t === p.tags[0] ? "" : " project-tag--secondary"
+                        }`}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ===== Contact ===== */}
+      <section className="section" id="contact">
+        <div className="container">
+          <Reveal>
+            <div className="section-header">
+              <span className="section-label">Contact</span>
+              <h2 className="section-title">Let's connect</h2>
+              <div className="section-divider" />
+            </div>
+          </Reveal>
+
+          <Reveal>
+            <div className="contact-content">
+              <p className="contact-text">
+                I'm always open to discussing new projects, creative ideas, or
+                opportunities to be part of something amazing.
+              </p>
+              <div className="contact-links">
+                <a
+                  href="mailto:vyadav1267354@gmail.com"
+                  className="contact-link"
+                >
+                  <span className="contact-link-icon">📧</span>
+                  Email Me
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/vinit-yadav-1bb36728b/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="contact-link"
+                >
+                  <span className="contact-link-icon">🔗</span>
+                  LinkedIn
+                </a>
+                <a
+                  href="https://github.com/shamstir"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="contact-link"
+                >
+                  <span className="contact-link-icon">🐙</span>
+                  GitHub
+                </a>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ===== Footer ===== */}
+      <footer className="footer">
+        <p className="footer-text">
+          © {new Date().getFullYear()} Vinit Yadav<span>.</span> Crafted with
+          care.
+        </p>
+      </footer>
+    </>
   );
 }
 
