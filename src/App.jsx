@@ -1,358 +1,421 @@
-import { useState, useEffect, useRef } from "react";
-import "./App.css";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import './App.css';
 
-const PROJECTS = [
-  {
-    name: "Proximity",
-    repo: "proximity",
-    desc: "A modern location-based mobile application built with Flutter and Dart.",
-    tags: ["Flutter", "Dart", "Mobile"],
-  },
-  {
-    name: "Ember Grants",
-    repo: "Ember-Grants",
-    desc: "A grant management platform built for streamlined application workflows and fund distribution tracking.",
-    tags: ["JavaScript", "Web App"],
-  },
-  {
-    name: "Paryatak",
-    repo: "paryatak",
-    desc: "A travel and tourism web application for discovering destinations and planning itineraries.",
-    tags: ["JavaScript", "Travel"],
-  },
-  {
-    name: "Insta",
-    repo: "insta",
-    desc: "A full-featured Instagram clone built with Flutter — feed, stories, profiles, and real-time interactions.",
-    tags: ["Flutter", "Dart", "Mobile"],
-  },
-  {
-    name: "Educat",
-    repo: "Educat",
-    desc: "An education platform app facilitating learning through interactive content and course management.",
-    tags: ["Flutter", "Dart", "EdTech"],
-  },
-  {
-    name: "FleetIQ",
-    repo: "fleetIQ",
-    desc: "Fleet management application for tracking vehicles, optimizing routes, and managing logistics.",
-    tags: ["Flutter", "Dart", "IoT"],
-  },
-  {
-    name: "Let's Talk",
-    repo: "Let-s_Talk",
-    desc: "Real-time chat application with modern UI, media sharing, and secure messaging features.",
-    tags: ["Flutter", "Dart", "Chat"],
-  },
+/* ─────────────── ASCII ART ─────────────── */
+const ASCII_ART = [
+  '██╗   ██╗██╗███╗   ██╗██╗████████╗',
+  '██║   ██║██║████╗  ██║██║╚══██╔══╝',
+  '██║   ██║██║██╔██╗ ██║██║   ██║   ',
+  '╚██╗ ██╔╝██║██║╚██╗██║██║   ██║   ',
+  ' ╚████╔╝ ██║██║ ╚████║██║   ██║   ',
+  '  ╚═══╝  ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝  ',
 ];
 
-const SKILLS = [
-  { icon: "📱", name: "Flutter" },
-  { icon: "🎯", name: "Dart" },
-  { icon: "⚛️", name: "React" },
-  { icon: "✨", name: "JavaScript" },
-  { icon: "🔥", name: "Firebase" },
-  { icon: "🎮", name: "Unity / C#" },
-  { icon: "🐙", name: "Git" },
-  { icon: "💻", name: "C++" },
-];
+/* ─────────────── PROMPT COMPONENT ─────────────── */
+const Prompt = () => (
+  <span className="prompt">
+    <span className="p-bracket">[</span>
+    <span className="p-user">visitor</span>
+    <span className="p-at">@</span>
+    <span className="p-host">vinit.dev</span>
+    <span className="p-bracket">]</span>
+    <span className="p-dir"> ~</span>
+    <span className="p-sym">$ </span>
+  </span>
+);
 
-const NAV_LINKS = [
-  { label: "About", href: "#about" },
-  { label: "Skills", href: "#skills" },
-  { label: "Projects", href: "#projects" },
-  { label: "Contact", href: "#contact" },
-];
+/* ─────────────── COMMAND DEFINITIONS ─────────────── */
+const COMMANDS = {
+  help: () => ({
+    type: 'help',
+    items: [
+      { cmd: 'about',    desc: '— who i am' },
+      { cmd: 'projects', desc: '— my projects' },
+      { cmd: 'stack',    desc: '— tech stack' },
+      { cmd: 'contact',  desc: '— how to reach me' },
+      { cmd: 'all',      desc: '— show everything at once' },
+      { cmd: 'github',   desc: '— open github profile' },
+      { cmd: 'whoami',   desc: '— quick intro' },
+      { cmd: 'banner',   desc: '— show ascii art' },
+      { cmd: 'clear',    desc: '— clear terminal' },
+    ],
+  }),
 
-function useScrollReveal() {
-  const ref = useRef(null);
+  about: () => ({
+    type: 'text',
+    lines: [
+      { text: '# about vinit yadav', heading: true },
+      { text: '' },
+      { text: "I'm a highly driven developer passionate about building" },
+      { text: 'apps that solve real problems.' },
+      { text: '' },
+      { text: 'From Flutter mobile apps and Unity game development' },
+      { text: 'to full-stack web projects — I love shipping products' },
+      { text: 'that feel great to use.' },
+      { text: '' },
+      { text: 'Currently exploring backend engineering & cybersecurity.' },
+      { text: 'Based in India. Open to remote freelance & contract work.' },
+    ],
+  }),
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+  projects: () => ({
+    type: 'projects',
+    items: [
+      { num: '01', name: 'Proximity',    desc: 'Location-based app with real-time discovery', tech: 'Flutter', year: '2024', url: 'https://github.com/Shamstir/proximity' },
+      { num: '02', name: 'Ember Grants', desc: 'Grant management platform for fund tracking',  tech: 'JavaScript', year: '2024', url: 'https://github.com/Shamstir/Ember-Grants' },
+      { num: '03', name: 'Paryatak',     desc: 'Travel app for discovering destinations',       tech: 'JavaScript', year: '2023', url: 'https://github.com/Shamstir/paryatak' },
+      { num: '04', name: 'Insta Clone',  desc: 'Full Instagram clone with real-time chat',      tech: 'Flutter', year: '2023', url: 'https://github.com/Shamstir/insta' },
+      { num: '05', name: 'Educat',       desc: 'Education platform with interactive content',   tech: 'Flutter', year: '2023', url: 'https://github.com/Shamstir/Educat' },
+      { num: '06', name: 'FleetIQ',      desc: 'Fleet management with vehicle tracking',        tech: 'Flutter', year: '2022', url: 'https://github.com/Shamstir/fleetIQ' },
+      { num: '07', name: "Let's Talk",   desc: 'Real-time chat with media sharing',             tech: 'Flutter', year: '2022', url: 'https://github.com/Shamstir/Let-s_Talk' },
+    ],
+  }),
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          el.classList.add("visible");
-        }
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -60px 0px" }
+  stack: () => ({
+    type: 'stack',
+    items: [
+      { cat: 'Mobile',   tools: ['Flutter', 'Dart'] },
+      { cat: 'Web',      tools: ['React', 'JavaScript'] },
+      { cat: 'Backend',  tools: ['Node.js', 'Firebase'] },
+      { cat: 'Game Dev', tools: ['Unity', 'C#'] },
+      { cat: 'Systems',  tools: ['C++'] },
+      { cat: 'Tooling',  tools: ['Git', 'GitHub'] },
+    ],
+  }),
+
+  contact: () => ({
+    type: 'contact',
+    items: [
+      { label: 'email',    value: 'vyadav1267354@gmail.com',     url: 'mailto:vyadav1267354@gmail.com' },
+      { label: 'github',   value: 'github.com/shamstir',          url: 'https://github.com/shamstir' },
+      { label: 'linkedin', value: 'in/vinit-yadav-1bb36728b',     url: 'https://linkedin.com/in/vinit-yadav-1bb36728b/' },
+    ],
+  }),
+
+  whoami: () => ({
+    type: 'whoami',
+    items: [
+      { key: 'name',       val: 'Vinit Yadav' },
+      { key: 'role',       val: 'App Developer' },
+      { key: 'location',   val: 'India' },
+      { key: 'stack',      val: 'Flutter · React · Unity' },
+      { key: 'status',     val: 'available for work ✓' },
+    ],
+  }),
+
+  banner: () => ({
+    type: 'banner',
+    lines: ASCII_ART,
+  }),
+
+  github: () => {
+    setTimeout(() => window.open('https://github.com/shamstir', '_blank'), 300);
+    return {
+      type: 'text',
+      lines: [{ text: 'opening github.com/shamstir ...' }],
+    };
+  },
+
+  all: () => ({
+    type: 'all',
+    sections: [
+      COMMANDS.about(),
+      COMMANDS.projects(),
+      COMMANDS.stack(),
+      COMMANDS.contact(),
+    ],
+  }),
+};
+
+const CMD_KEYS = Object.keys(COMMANDS);
+
+/* ─────────────── OUTPUT ENTRY RENDERER ─────────────── */
+function OutputEntry({ entry }) {
+  const { type } = entry;
+
+  if (type === 'banner') {
+    return (
+      <div className="te-banner">
+        {entry.lines.map((l, i) => <pre key={i} className="te-ascii">{l}</pre>)}
+      </div>
     );
+  }
 
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  if (type === 'boot-line') {
+    return <div className={`te-line${entry.dim ? ' te-dim' : entry.muted ? ' te-muted' : ''}`}>{entry.text}</div>;
+  }
 
-  return ref;
+  if (type === 'input-echo') {
+    return (
+      <div className="te-input-echo">
+        <Prompt />
+        <span className="te-cmd">{entry.cmd}</span>
+      </div>
+    );
+  }
+
+  if (type === 'error') {
+    return <div className="te-output te-error">{entry.text}</div>;
+  }
+
+  if (type === 'help') {
+    return (
+      <div className="te-help">
+        <div className="te-section-label">Available commands:</div>
+        <div className="te-help-grid">
+          {entry.items.map(({ cmd, desc }) => (
+            <div key={cmd} className="te-help-row">
+              <span className="te-help-cmd">{cmd}</span>
+              <span className="te-help-desc">{desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'projects') {
+    return (
+      <div className="te-projects">
+        <div className="te-section-label">projects  <span style={{ color: 'var(--surface2)', fontWeight: 400 }}>({entry.items.length} found)</span></div>
+        {entry.items.map(p => (
+          <div key={p.num} className="te-project-row">
+            <span className="te-proj-num">{p.num}</span>
+            <span className="te-proj-name">
+              <a href={p.url} target="_blank" rel="noopener noreferrer">{p.name}</a>
+            </span>
+            <span className="te-proj-desc">{p.desc}</span>
+            <span className="te-proj-tech">[{p.tech}]</span>
+            <span className="te-proj-year">{p.year}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === 'stack') {
+    return (
+      <div className="te-stack">
+        <div className="te-section-label">tech stack</div>
+        {entry.items.map(({ cat, tools }) => (
+          <div key={cat} className="te-stack-row">
+            <span className="te-stack-cat">{cat}</span>
+            <span className="te-stack-items">{tools.join('  ·  ')}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === 'contact') {
+    return (
+      <div className="te-contact">
+        <div className="te-section-label">contact</div>
+        {entry.items.map(({ label, value, url }) => (
+          <div key={label} className="te-contact-row">
+            <span className="te-contact-label">{label}</span>
+            <a href={url} target="_blank" rel="noopener noreferrer" className="te-contact-link">{value}</a>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === 'whoami') {
+    return (
+      <div className="te-whoami">
+        {entry.items.map(({ key, val }) => (
+          <div key={key} className="te-whoami-line">
+            <span className="te-whoami-key">{key}</span>
+            <span className="te-whoami-value">{val}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === 'text') {
+    return (
+      <div className="te-text">
+        {entry.lines.map((l, i) => (
+          <div key={i} className={`te-line${l.heading ? ' te-heading' : ''}`}>
+            {l.heading ? l.text.replace(/^# /, '') : l.text}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === 'all') {
+    return (
+      <div className="te-all">
+        {entry.sections.map((section, i) => (
+          <div key={i} className="te-all-section">
+            {i > 0 && <div className="te-divider" />}
+            <OutputEntry entry={{ ...section, id: `all-${i}` }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return null;
 }
 
-function Reveal({ className = "", stagger = false, children }) {
-  const ref = useScrollReveal();
-  const cls = stagger ? `reveal-stagger ${className}` : `reveal ${className}`;
+/* ─────────────── APP ─────────────── */
+export default function App() {
+  const [bootEntries, setBootEntries] = useState([]);  // permanent — never cleared
+  const [entries,     setEntries]     = useState([]);  // session — cleared by 'clear'
+  const [input,       setInput]       = useState('');
+  const [cmdHistory,  setCmdHistory]  = useState([]);
+  const [histIdx,     setHistIdx]     = useState(-1);
+  const [booted,      setBooted]      = useState(false);
+
+  const bodyRef  = useRef(null);
+  const inputRef = useRef(null);
+  let   idSeq    = useRef(0);
+
+  const nextId = () => ++idSeq.current;
+
+  const bootStarted = useRef(false);
+
+  /* ── Boot sequence ── */
+  useEffect(() => {
+    if (bootStarted.current) return;
+    bootStarted.current = true;
+    const bootLines = [
+      { type: 'banner', lines: ASCII_ART },
+      { type: 'boot-line', text: '' },
+      { type: 'boot-line', text: 'vinit.dev  —  Portfolio Shell v1.0', dim: true },
+      { type: 'boot-line', text: 'App Developer  ·  Flutter  ·  React  ·  Unity', dim: true },
+      { type: 'boot-line', text: '' },
+      { type: 'boot-line', text: "type 'help' and press Enter to see available commands.", muted: true },
+      { type: 'boot-line', text: '' },
+    ];
+
+    bootLines.forEach((line, i) => {
+      setTimeout(() => {
+        setBootEntries(prev => [...prev, { ...line, id: nextId() }]);
+        if (i === bootLines.length - 1) setBooted(true);
+      }, i * 60);
+    });
+  }, []);
+
+  /* ── Auto-scroll ── */
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [entries]);
+
+  /* ── Focus input on any click ── */
+  const focusInput = useCallback((e) => {
+    // don't steal focus from links
+    if (e.target.tagName === 'A') return;
+    inputRef.current?.focus();
+  }, []);
+
+  /* ── Run command ── */
+  const runCommand = useCallback((raw) => {
+    const cmd = raw.trim().toLowerCase();
+
+    const echoEntry = { id: nextId(), type: 'input-echo', cmd: raw.trim() || '' };
+
+    if (cmd === 'clear') {
+      setEntries([]);
+      return;
+    }
+
+    if (!cmd) {
+      setEntries(prev => [...prev, echoEntry]);
+      return;
+    }
+
+    setCmdHistory(h => [cmd, ...h]);
+    setHistIdx(-1);
+
+    const handler = COMMANDS[cmd];
+    if (handler) {
+      const result = handler();
+      setEntries(prev => [...prev, echoEntry, { id: nextId(), ...result }]);
+    } else {
+      // fuzzy hint
+      const close = CMD_KEYS.find(k => k.startsWith(cmd[0]));
+      const hint  = close ? `  did you mean '${close}'?` : "  type 'help' to see available commands.";
+      setEntries(prev => [...prev, echoEntry, {
+        id: nextId(), type: 'error',
+        text: `command not found: ${cmd}.${hint}`,
+      }]);
+    }
+  }, []);
+
+  /* ── Key handling ── */
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter') {
+      runCommand(input);
+      setInput('');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHistIdx(i => {
+        const next = Math.min(i + 1, cmdHistory.length - 1);
+        setInput(cmdHistory[next] ?? '');
+        return next;
+      });
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHistIdx(i => {
+        const next = Math.max(i - 1, -1);
+        setInput(next < 0 ? '' : cmdHistory[next] ?? '');
+        return next;
+      });
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      if (!input) return;
+      const match = CMD_KEYS.find(k => k.startsWith(input.toLowerCase()));
+      if (match) setInput(match);
+    } else if (e.key === 'l' && e.ctrlKey) {
+      e.preventDefault();
+      setEntries([]);
+    }
+  }, [input, cmdHistory, runCommand]);
+
   return (
-    <div ref={ref} className={cls}>
-      {children}
+    <div className="terminal-page" onClick={focusInput}>
+      {/* ── Title Bar ── */}
+      <div className="terminal-titlebar">
+        <span className="terminal-title">visitor@vinit.dev — zsh</span>
+      </div>
+
+      {/* ── Body ── */}
+      <div className="terminal-body" ref={bodyRef}>
+      {/* ── Permanent boot section ── */}
+        {bootEntries.map(entry => (
+          <OutputEntry key={entry.id} entry={entry} />
+        ))}
+
+        {/* ── Clearable session history ── */}
+        {entries.map(entry => (
+          <OutputEntry key={entry.id} entry={entry} />
+        ))}
+
+        {/* Active prompt */}
+        {booted && (
+          <div className="terminal-prompt-line">
+            <Prompt />
+            <input
+              ref={inputRef}
+              className="terminal-input"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              spellCheck={false}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-function App() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const closeMenu = () => setMenuOpen(false);
-
-  return (
-    <>
-      {/* ===== Navbar ===== */}
-      <nav className={`navbar${scrolled ? " scrolled" : ""}`} id="navbar">
-        <div className="navbar-inner">
-          <a href="#" className="navbar-logo">
-            vinit<span>.</span>
-          </a>
-
-          <div className="navbar-links">
-            {NAV_LINKS.map((l) => (
-              <a key={l.href} href={l.href}>
-                {l.label}
-              </a>
-            ))}
-          </div>
-
-          <button
-            className={`hamburger${menuOpen ? " open" : ""}`}
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile nav overlay */}
-      <div className={`mobile-nav${menuOpen ? " open" : ""}`}>
-        {NAV_LINKS.map((l) => (
-          <a key={l.href} href={l.href} onClick={closeMenu}>
-            {l.label}
-          </a>
-        ))}
-      </div>
-
-      {/* ===== Hero ===== */}
-      <section className="hero" id="home">
-        <div className="hero-bg">
-          <div className="hero-bg-orb hero-bg-orb--1" />
-          <div className="hero-bg-orb hero-bg-orb--2" />
-        </div>
-        <div className="hero-content">
-          <span className="hero-label">App Developer</span>
-          <h1 className="hero-title">
-            Hi, I'm <span className="accent">Vinit Yadav</span>
-          </h1>
-          <p className="hero-subtitle">
-            I craft polished mobile apps, immersive games, and thoughtful web
-            experiences — turning ideas into products people love.
-          </p>
-          <div className="hero-actions">
-            <a
-              href="#projects"
-              className="btn btn-primary"
-            >
-              View Projects ↓
-            </a>
-            <a
-              href="https://github.com/shamstir"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-secondary"
-            >
-              GitHub ↗
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== About ===== */}
-      <section className="section" id="about">
-        <div className="container">
-          <Reveal>
-            <div className="section-header">
-              <span className="section-label">About</span>
-              <h2 className="section-title">A bit about me</h2>
-              <div className="section-divider" />
-            </div>
-          </Reveal>
-
-          <Reveal>
-            <div className="about-content">
-              <p className="about-text">
-                I'm a <strong>highly driven developer</strong> passionate about
-                building apps that solve real problems. From{" "}
-                <strong>Flutter mobile apps</strong> and{" "}
-                <strong>game development with Unity</strong> to full-stack web
-                projects — I love shipping products that feel great to use. Currently
-                exploring <strong>backend engineering</strong> and{" "}
-                <strong>cybersecurity</strong>, and always sharpening my skills
-                through competitive programming.
-              </p>
-
-              <div className="about-stats">
-                <div className="about-stat">
-                  <div className="about-stat-number">7+</div>
-                  <div className="about-stat-label">Projects</div>
-                </div>
-                <div className="about-stat">
-                  <div className="about-stat-number">4+</div>
-                  <div className="about-stat-label">Flutter Apps</div>
-                </div>
-                <div className="about-stat">
-                  <div className="about-stat-number">3+</div>
-                  <div className="about-stat-label">Web Platforms</div>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ===== Skills ===== */}
-      <section className="section" id="skills">
-        <div className="container">
-          <Reveal>
-            <div className="section-header">
-              <span className="section-label">Skills</span>
-              <h2 className="section-title">Tech I work with</h2>
-              <div className="section-divider" />
-            </div>
-          </Reveal>
-
-          <Reveal stagger>
-            <div className="skills-grid">
-              {SKILLS.map((s) => (
-                <div key={s.name} className="skill-card reveal-child">
-                  <span className="skill-icon">{s.icon}</span>
-                  <span className="skill-name">{s.name}</span>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ===== Projects ===== */}
-      <section className="section" id="projects">
-        <div className="container">
-          <Reveal>
-            <div className="section-header">
-              <span className="section-label">Projects</span>
-              <h2 className="section-title">What I've built</h2>
-              <div className="section-divider" />
-            </div>
-          </Reveal>
-
-          <Reveal stagger>
-            <div className="projects-grid">
-              {PROJECTS.map((p) => (
-                <a
-                  key={p.repo}
-                  href={`https://github.com/Shamstir/${p.repo}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="project-card reveal-child"
-                  style={{ textDecoration: "none" }}
-                >
-                  <div className="project-card-header">
-                    <span className="project-card-icon">📂</span>
-                    <span className="project-card-link">↗</span>
-                  </div>
-                  <h3 className="project-card-title">{p.name}</h3>
-                  <p className="project-card-desc">{p.desc}</p>
-                  <div className="project-card-footer">
-                    {p.tags.map((t) => (
-                      <span
-                        key={t}
-                        className={`project-tag${
-                          t === p.tags[0] ? "" : " project-tag--secondary"
-                        }`}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </a>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ===== Contact ===== */}
-      <section className="section" id="contact">
-        <div className="container">
-          <Reveal>
-            <div className="section-header">
-              <span className="section-label">Contact</span>
-              <h2 className="section-title">Let's connect</h2>
-              <div className="section-divider" />
-            </div>
-          </Reveal>
-
-          <Reveal>
-            <div className="contact-content">
-              <p className="contact-text">
-                I'm always open to discussing new projects, creative ideas, or
-                opportunities to be part of something amazing.
-              </p>
-              <div className="contact-links">
-                <a
-                  href="mailto:vyadav1267354@gmail.com"
-                  className="contact-link"
-                >
-                  <span className="contact-link-icon">📧</span>
-                  Email Me
-                </a>
-                <a
-                  href="https://www.linkedin.com/in/vinit-yadav-1bb36728b/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="contact-link"
-                >
-                  <span className="contact-link-icon">🔗</span>
-                  LinkedIn
-                </a>
-                <a
-                  href="https://github.com/shamstir"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="contact-link"
-                >
-                  <span className="contact-link-icon">🐙</span>
-                  GitHub
-                </a>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ===== Footer ===== */}
-      <footer className="footer">
-        <p className="footer-text">
-          © {new Date().getFullYear()} Vinit Yadav<span>.</span> Crafted with
-          care.
-        </p>
-      </footer>
-    </>
-  );
-}
-
-export default App;
