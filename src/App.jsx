@@ -301,6 +301,17 @@ export default function App() {
     });
   }, []);
 
+  /* ── Auto-run 'all' once boot completes ── */
+  useEffect(() => {
+    if (!booted) return;
+    const t = setTimeout(() => {
+      const echoEntry = { id: nextId(), type: 'input-echo', cmd: 'all' };
+      const result    = COMMANDS.all();
+      setEntries(prev => [...prev, echoEntry, { id: nextId(), ...result }]);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [booted]);
+
   /* ── Auto-scroll ── */
   useEffect(() => {
     const el = bodyRef.current;
